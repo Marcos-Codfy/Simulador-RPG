@@ -1,66 +1,20 @@
-# BattleManager.py
 import random
 import time
 
 class Battle:
     """
-    Esta classe gere toda a lógica de uma batalha.
-    Ela é responsável pelos turnos, ataques e verificação de status.
+    Esta classe é o "Controlador".
+    Ela contém a LÓGICA da batalha (regras, turnos, ataques).
+    Ela NÃO sabe como desenhar, mas diz ao 'View' O QUE desenhar.
     """
     
-    def __init__(self, heroes, enemies):
-        """
-        O construtor recebe as listas de participantes.
-        """
+    def __init__(self, heroes, enemies, view):
         self.heroes = heroes
         self.enemies = enemies
+        self.view = view  # Recebe o objeto GameView
         self.turn = 1
 
-    def start_battle(self):
-        """
-        Este é o método principal que inicia e gere o loop da batalha.
-        """
-        print("*************************************")
-        print("")
-        print("*-------COMEÇA A BATALHA!----------*")
-        print("")
-        print("*************************************")
-        time.sleep(2) 
-
-        print("\nNossos heróis se preparam:")
-        print(" -> ", [hero.name for hero in self.heroes])
-        time.sleep(1)
-
-        print("\nEles encontrarão pela frente:")
-        print(" -> ", [enemy.name for enemy in self.enemies])
-        time.sleep(2)
-        print("\n" + "="*40 + "\n")
-        time.sleep(1)
-
-        # O loop principal da batalha
-        while self._any_hero_alive() and self._any_enemy_alive():
-            print(f"--- Turno {self.turn} ---")
-            time.sleep(1)
-
-            # Filtramos as listas de vivos a cada turno
-            living_heroes = self._get_living_heroes()
-            living_enemies = self._get_living_enemies()
-
-            # Executa os turnos
-            self._execute_hero_turn(living_heroes, living_enemies)
-            self._execute_enemy_turn(living_heroes, living_enemies)
-
-            # Exibe o status no final do turno
-            self._display_turn_status()
-            
-            print("\n" + "="*40 + "\n")
-            self.turn += 1
-            time.sleep(2) # Pausa maior entre os turnos
-
-        # Fim da batalha
-        self._display_battle_results()
-
-    # --- Métodos Auxiliares (Privados) ---
+    # --- Métodos de verificação de estado ---
     
     def _any_hero_alive(self):
         return any(hero.is_alive() for hero in self.heroes)
@@ -74,91 +28,107 @@ class Battle:
     def _get_living_enemies(self):
         return [e for e in self.enemies if e.is_alive()]
 
+    # --- Métodos de execução de turno ---
+
     def _execute_hero_turn(self, living_heroes, living_enemies):
-        print("\n-- Vez dos Heróis --")
-        time.sleep(1)
-        
-        # Copiamos a lista de inimigos vivos para poder removê-los
-        # sem afetar a iteração da lista principal
-        targets_available = living_enemies.copy()
-        
+        self.view.draw_battle_scene(f"--- Turno {self.turn}: Vez dos Heróis ---")
+        time.sleep(2)  
+
         for hero in living_heroes:
-            if not targets_available: break # Encerra se não houver inimigos vivos
+            if not living_enemies: break  
             
-            target = random.choice(targets_available)
-            
+            target = random.choice(living_enemies)
             damage = hero.Atack() # Polimorfismo
             
-            print(f"{hero.name} ataca {target.name}...")
-            time.sleep(1)
-            print(f"   ...causando {damage} de dano!")
+            self.view.draw_battle_scene(f"{hero.name} ataca {target.name}...")
+            time.sleep(1.2)
             
             target.Defend(damage) # Polimorfismo
-            time.sleep(1)
+            self.view.draw_battle_scene(f"{hero.name} causou {damage} de dano em {target.name}!")
+            time.sleep(1.5)  
 
             if not target.is_alive():
-                print(f"   !!! {target.name} foi derrotado !!!")
-                targets_available.remove(target) 
-                time.sleep(1)
+                if target in living_enemies:
+                    living_enemies.remove(target)
+                self.view.draw_battle_scene(f"!!! {target.name} foi derrotado !!!")
+                time.sleep(2)
 
     def _execute_enemy_turn(self, living_heroes, living_enemies):
-        print("\n-- Vez dos Inimigos --")
-        time.sleep(1)
+        self.view.draw_battle_scene(f"--- Turno {self.turn}: Vez dos Inimigos ---")
+        time.sleep(2)
+
+        for enemy in living_enemies:
+            if not living_heroes: break  
+            
+            target = random.choice(living_heroes)
+            damage = enemy.Atack() # Polimorfismo
+
+            self.view.draw_battle_scene(f"{enemy.name} ataca {target.name}...")
+            time.sleep(1.2)
+            
+            target.Defend(damage) # Polimorfismo
+            self.view.draw_battle_scene(f"{enemy.name} causou {damage} de dano em {target.name}!")
+            time.sleep(1.5)
+
+            if not target.is_alive():
+                if target in living_heroes:
+                    living_heroes.remove(target)
+                self.view.draw_battle_scene(f"!!! {target.name} foi derrotado !!!")
+                time.sleep(2)
+
+    # --- Métodos principais do jogo ---
+
+    def start_battle(self):
+        """
+        Este é o método principal que inicia e gere o loop da batalha.
+        """
+        self.view.draw_battle_scene("A BATALHA VAI COMEÇAR!")
+        input("\nPressione ENTER para continuar...")
+
+        while self._any_hero_alive() and self._any_enemy_alive():
+            
+            living_heroes = self._get_living_heroes()
+            living_enemies = self._get_living_enemies()
+
+            # Vez dos Heróis
+            self._execute_hero_turn(living_heroes, living_enemies)
+            
+            # Atualiza listas de vivos para a vez dos inimigos
+            living_heroes = self._get_living_heroes()
+            living_enemies = self._get_living_enemies()
+
+            # Vez dos Inimigos (só se ainda houver heróis e inimigos)
+            if living_enemies and living_heroes:
+                self._execute_enemy_turn(living_heroes, living_enemies)
+            
+            self.turn += 1
         
-        # Copiamos a lista de heróis vivos
-        targets_available = living_heroes.copy()
+        # A batalha terminou, mostra os resultados
+        self._show_final_results()
 
-        if living_enemies:
-            for enemy in living_enemies:
-                if not targets_available: break
-                
-                target = random.choice(targets_available)
-                
-                damage = enemy.Atack() # Polimorfismo
+    def _show_final_results(self):
+        """
+        Mostra a tela de vitória ou derrota.
+        """
+        self.view.clear_screen()
+        print("\n" * 5)  
 
-                print(f"{enemy.name} ataca {target.name}...")
-                time.sleep(1)
-                print(f"   ...causando {damage} de dano!")
-                
-                target.Defend(damage) # Polimorfismo
-                time.sleep(1)
-
-                if not target.is_alive():
-                    print(f"   !!! {target.name} foi derrotado !!!")
-                    targets_available.remove(target)
-                    time.sleep(1)
-        
-        print("-" * 20)
-        time.sleep(1)
-
-    def _display_turn_status(self):
-        print("\n-- Status no final do turno --")
-        print("HP Heróis:")
-        for hero in self.heroes:
-            status = "DERROTADO" if not hero.is_alive() else f"HP: {hero.hp}"
-            print(f"  {hero.name}: {status}")
-
-        print("\nHP Inimigos:")
-        for enemy in self.enemies:
-            # Corrigido: Estava 'hero.hp' no original, mudei para 'enemy.hp'
-            status = "DERROTADO" if not enemy.is_alive() else f"HP: {enemy.hp}"
-            print(f"  {enemy.name}: {status}")
-
-    def _display_battle_results(self):
-        print("\n--- A BATALHA TERMINOU ---")
-        time.sleep(1)
+        # Re-usa as constantes de cor do GameView
+        from GameView import COLOR 
 
         if self._any_hero_alive():
-            print("\n*************************************")
-            print("* VITÓRIA DOS HERÓIS!       *")
-            print("*************************************")
-            print("\nSobreviventes:")
-            for hero in self._get_living_heroes():
-                print(f"  - {hero.name} (HP: {hero.hp})")
+            print(f"{COLOR['GREEN']}{'*************************************'.center(92)}{COLOR['RESET']}")
+            print(f"{COLOR['GREEN']}{'* VITÓRIA DOS HERÓIS!       *'.center(92)}{COLOR['RESET']}")
+            print(f"{COLOR['GREEN']}{'*************************************'.center(92)}{COLOR['RESET']}")
         else:
-            print("\n*************************************")
-            print("* OS INIMIGOS VENCERAM!      *")
-            print("*************************************")
-            print("\nSobreviventes:")
-            for enemy in self._get_living_enemies():
-                print(f"  - {enemy.name} (HP: {enemy.hp})")
+            print(f"{COLOR['RED']}{'*************************************'.center(92)}{COLOR['RESET']}")
+            print(f"{COLOR['RED']}{'* OS INIMIGOS VENCERAM!      *'.center(92)}{COLOR['RESET']}")
+            print(f"{COLOR['RED']}{'*************************************'.center(92)}{COLOR['RESET']}")
+
+        print("\n\n--- STATUS FINAL ---\n")
+        
+        # Chama a renderização final, passando 'is_final_screen=True'
+        self.view.draw_battle_scene("FIM DE JOGO", is_final_screen=True)
+
+        print("\n")  
+        input("Pressione ENTER para sair.")

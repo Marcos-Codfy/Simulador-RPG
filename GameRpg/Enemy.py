@@ -1,11 +1,9 @@
-# Enemy.py
 from Person import Person # Importa a classe Pai
 
 """
 CONCEITO DE HERANÇA (Inheritance):
 A classe 'Enemy' herda de 'Person'.
 Serve como uma classe base para todos os tipos de inimigos.
-(Você já tinha feito isso, estava perfeito!)
 """
 class Enemy(Person):
     def __init__(self, name, hp, mana, power_atk, defense, level):
@@ -15,8 +13,6 @@ class Enemy(Person):
         para que ela inicialize os atributos comuns.
         """
         super().__init__(name, hp, mana, power_atk, defense, level)
-        # Atributos específicos de Inimigos poderiam vir aqui.
-        # Ex: self.loot_table = ["Gold", "Potion"]
 
 """
 CONCEITO DE HERANÇA (nível 2):
@@ -36,7 +32,7 @@ class Goblin(Enemy):
             defense=15, 
             level=1
         )
-        # Corrigindo o atributo (era 'type_waepon')
+
         self.type_weapon = "Club"
 
 class Orc(Enemy):
@@ -56,7 +52,7 @@ class Dragon(Enemy):
         super().__init__(
             name="Dragon", 
             hp=300, 
-            mana=100, # Dragão pode ter mana para 'Fire'
+            mana=100, 
             power_atk=90, 
             defense=45, 
             level=10

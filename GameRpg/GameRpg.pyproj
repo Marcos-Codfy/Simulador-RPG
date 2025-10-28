@@ -24,6 +24,7 @@
     <Compile Include="BattleManager.py" />
     <Compile Include="Enemy.py" />
     <Compile Include="GameRpg.py" />
+    <Compile Include="GameView.py" />
     <Compile Include="Hero.py" />
     <Compile Include="Person.py" />
   </ItemGroup>

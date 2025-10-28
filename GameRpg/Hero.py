@@ -1,4 +1,3 @@
-﻿# Hero.py
 from Person import Person # Importa a classe Pai
 
 """
@@ -19,8 +18,7 @@ class Hero(Person):
         para que ela inicialize os atributos comuns que passamos para ela.
         """
         super().__init__(name, hp, mana, power_atk, defense, level)
-        # Atributos específicos de Heróis poderiam vir aqui.
-        # Ex: self.inventory = []
+
 
 
 """
@@ -43,7 +41,6 @@ class Warrior(Hero):
             defense=60, 
             level=1
         )
-        # Corrigindo o atributo (era 'type_waepon')
         self.type_weapon = "Sword"
 
 class Mage(Hero):
@@ -57,22 +54,6 @@ class Mage(Hero):
             level=1
         )
         self.type_weapon = "Staff"
-        
-        # =================================================================
-        # EXEMPLO DE POLIMORFISMO (Sobrescrita de Método)
-        # Se você quiser, pode descomentar este método 'Atack'.
-        # O 'GameRpg.py' (graças ao Polimorfismo) vai automaticamente
-        # usar ESTE método para o Mago, e o da 'Person' para os outros.
-        # =================================================================
-        
-        # def Atack(self):
-        #    if self.mana >= 10:
-        #        self.mana -= 10
-        #        print(f"  {self.name} usa BOLA DE FOGO!")
-        #        return self.power_atk * 1.5 # Ataque mais forte
-        #    else:
-        #        print(f"  {self.name} está sem mana! Ataque físico fraco.")
-        #        return self.power_atk * 0.5
 
 
 class Archer(Hero):

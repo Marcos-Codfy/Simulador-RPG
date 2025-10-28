@@ -1,4 +1,3 @@
-# Person.py
 """
 Este arquivo define a CLASSE BASE para todas as entidades vivas no jogo.
 Em POO, esta é a 'Superclasse' ou 'Classe Pai'.
@@ -11,11 +10,9 @@ class Person:
         # Atributos que todas as 'Person' (Pessoas) terão
         self.name = name
         self.hp = hp
-        
-        # --- MODIFICAÇÃO IMPORTANTE ---
-        # Guardamos o HP original para poder exibir "HP: 150/150"
-        self.hp_max = hp # <-- ESTA LINHA É ESSENCIAL
-        # --- FIM DA MODIFICAÇÃO ---
+
+        self.hp_max = hp 
+   
         
         self.mana = mana
         self.power_atk = power_atk
@@ -45,6 +42,6 @@ class Person:
 
     def is_alive(self):
         """
-        Método auxiliar para verificar se a pessoa está viva.
+        Método auxiliar para verificar se o personagem está vivo
         """
         return self.hp > 0
