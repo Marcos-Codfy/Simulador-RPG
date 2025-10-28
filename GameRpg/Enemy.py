@@ -1,4 +1,4 @@
-﻿# Enemy.py
+# Enemy.py
 from Person import Person # Importa a classe Pai
 
 """
@@ -45,7 +45,7 @@ class Orc(Enemy):
             name="Orc", 
             hp=180, 
             mana=0,
-            power_atk=50, 
+            power_atk=60, 
             defense=30, 
             level=3
         )
@@ -57,7 +57,7 @@ class Dragon(Enemy):
             name="Dragon", 
             hp=300, 
             mana=100, # Dragão pode ter mana para 'Fire'
-            power_atk=80, 
+            power_atk=90, 
             defense=45, 
             level=10
         )
