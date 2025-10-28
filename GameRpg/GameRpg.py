@@ -3,6 +3,19 @@ import random
 import time
 import os  # Importa a biblioteca 'Operating System' para limpar a tela
 
+# --- HABILITA CORES ANSI NO TERMINAL WINDOWS ---
+# (No Linux/macOS isso não é necessário, mas não causa mal)
+os.system("")
+# ---------------------------------------------
+
+# --- Constantes de Cor ANSI ---
+COLOR = {
+    "RED": "\033[91m",    # Vermelho claro
+    "GREEN": "\033[92m",  # Verde claro
+    "RESET": "\033[0m"   # Reseta a cor para o padrão
+}
+# --------------------------------
+
 # Importamos as classes CONCRETAS (Hero.py e Enemy.py não precisam de mudanças)
 # (Certifique-se que os arquivos Hero.py e Enemy.py estão na mesma pasta)
 # from Hero import Warrior, Mage, Archer
@@ -66,10 +79,12 @@ def draw_message_box(message=""):
     print("║" + " " * largura + "║")
     print("╚" + "═" * largura + "╝")
 
-def create_status_box(title, character_list, width):
+# --- MUDANÇA 1: Adicionado 'is_final_screen' ---
+def create_status_box(title, character_list, width, is_final_screen=False):
     """
     Esta função auxiliar CRIA uma caixa de status como uma lista de strings.
     Ela não imprime, apenas retorna as linhas.
+    'is_final_screen' controla a cor verde para os vivos.
     """
     box_lines = []
     inner_width = width - 2 # Largura interna da caixa (sem as bordas ║) = 43
@@ -87,36 +102,38 @@ def create_status_box(title, character_list, width):
     for char in character_list:
         status = "VIVO" if char.is_alive() else "DERROTADO"
         
-        # --- CORREÇÃO DE ALINHAMENTO DE COLUNA ---
-        # Construímos a string em colunas de largura fixa
-        
-        # Coluna 1: Nome (8 caracteres de largura, alinhado à esquerda)
+        # Alinhamento por colunas (como corrigido anteriormente)
         col_name = f"{char.name:<8}" 
-        
-        # Coluna 2: HP (14 caracteres de largura)
-        # (Os :3 garantem que 1, 80, 150 ocupem o mesmo espaço)
         col_hp = f"| HP: {char.hp:3}/{char.hp_max:3}"
-        
-        # Coluna 3: MP (9 caracteres de largura)
         col_mp = f"| MP: {char.mana:3}"
-        
-        # Coluna 4: Status (11 caracteres de largura)
-        col_status = f"| {status:<8}" # 8 para "DERROTADO" + 3 para "| "
-        
-        # Juntamos todas as colunas
+        col_status = f"| {status:<8}"
         stats_line = f"{col_name}{col_hp}{col_mp}{col_status}"
-        # ------------------------------------------------
         
-        # O comprimento total agora é 8 + 14 + 9 + 11 = 42
-        # .ljust(43) adicionará 1 espaço ao final, totalizando 43.
-        box_lines.append("║" + stats_line.ljust(inner_width) + "║")
+        # Monta a linha completa COM BORDAS
+        full_line = "║" + stats_line.ljust(inner_width) + "║"
         
+        # --- MUDANÇA 2: Lógica de Coloração ---
+        # A cor é aplicada NA LINHA INTEIRA (com bordas),
+        # DEPOIS do '.ljust()', para não quebrar o alinhamento.
+        
+        if char.is_alive():
+            if is_final_screen:
+                # Se for a tela final, os vivos ficam VERDES
+                full_line = f"{COLOR['GREEN']}{full_line}{COLOR['RESET']}"
+        else:
+            # Se estiver derrotado, fica VERMELHO (em qualquer tela)
+            full_line = f"{COLOR['RED']}{full_line}{COLOR['RESET']}"
+        
+        box_lines.append(full_line)
+        # --- Fim da Lógica de Coloração ---
+            
     # 5. Fundo da Caixa
     box_lines.append("╚" + "═" * inner_width + "╝")
     
     return box_lines
 
-def draw_battle_scene(heroes, enemies, message=""):
+# --- MUDANÇA 3: Adicionado 'is_final_screen' ---
+def draw_battle_scene(heroes, enemies, message="", is_final_screen=False):
     """
     Esta é a nossa função de "renderização".
     Ela desenha as duas caixas lado a lado e a mensagem em baixo.
@@ -126,31 +143,26 @@ def draw_battle_scene(heroes, enemies, message=""):
     box_width = 45 # Largura de CADA caixa
     
     # 1. Gerar as duas caixas como listas de strings
-    hero_box_lines = create_status_box("--- GRUPO DOS HERÓIS ---", heroes, box_width)
-    enemy_box_lines = create_status_box("--- GRUPO DOS INIMIGOS ---", enemies, box_width)
+    # --- MUDANÇA 4: Passa 'is_final_screen' para a função de criar ---
+    hero_box_lines = create_status_box("--- GRUPO DOS HERÓIS ---", heroes, box_width, is_final_screen)
+    enemy_box_lines = create_status_box("--- GRUPO DOS INIMIGOS ---", enemies, box_width, is_final_screen)
     
     # 2. Descobrir qual caixa é mais alta
     max_height = max(len(hero_box_lines), len(enemy_box_lines))
     
     # 3. "Preencher" a caixa mais baixa para que ambas tenham a mesma altura
-    # Isto garante que os '╚═╝' fiquem alinhados
     while len(hero_box_lines) < max_height:
-        # Insere uma linha em branco (║ ║) antes da última linha (╚═╝)
         hero_box_lines.insert(-1, "║" + " " * (box_width - 2) + "║")
         
     while len(enemy_box_lines) < max_height:
-        # Insere uma linha em branco (║ ║) antes da última linha (╚═╝)
         enemy_box_lines.insert(-1, "║" + " " * (box_width - 2) + "║")
 
     # 4. Imprimir as caixas, linha por linha, lado a lado
     print("\n" * 3) # Adiciona espaço no topo
     
     for i in range(max_height):
-        # --- CORREÇÃO 2 ---
-        # Garante que está usando DOIS ESPAÇOS NORMAIS (ASCII 32)
-        # entre as duas caixas para o alinhamento correto.
+        # (Usa 2 espaços normais para o alinhamento)
         print(f"{hero_box_lines[i]}  {enemy_box_lines[i]}")
-        # ------------------
         
     print("\n" * 2) # Adiciona espaço entre a UI e a mensagem
 
@@ -163,6 +175,7 @@ heroes = [Warrior(), Mage(), Archer(), Warrior()]
 enemies = [Goblin(), Orc(), Goblin(), Dragon()]
 
 # --- Mensagem Inicial ---
+# (is_final_screen = False por padrão)
 draw_battle_scene(heroes, enemies, "A BATALHA VAI COMEÇAR!")
 input("\nPressione ENTER para continuar...")
 
@@ -171,38 +184,35 @@ input("\nPressione ENTER para continuar...")
 turn = 1
 while any(hero.is_alive() for hero in heroes) and any(enemy.is_alive() for enemy in enemies):
     
-    # Filtra apenas os vivos (igual ao seu código)
     living_heroes = [h for h in heroes if h.is_alive()]
     living_enemies = [e for e in enemies if e.is_alive()]
 
     # --- Vez dos Heróis ---
-    # 1. Desenha o estado inicial do turno
+    # (is_final_screen = False por padrão)
     draw_battle_scene(heroes, enemies, f"--- Turno {turn}: Vez dos Heróis ---")
-    time.sleep(2) # Pausa para o jogador ler
+    time.sleep(2) 
 
     if living_heroes:
         for hero in living_heroes:
-            if not living_enemies: break # Se todos os inimigos morreram
+            if not living_enemies: break 
             
             target = random.choice(living_enemies)
             damage = hero.Atack()
             
-            # --- "Animação" de Mensagem (Sem Arte) ---
-            
-            # 2. FRAME 1: Anuncia o ataque
+            # (is_final_screen = False por padrão)
             draw_battle_scene(heroes, enemies, f"{hero.name} ataca {target.name}...")
             time.sleep(1.2)
             
-            # 3. FRAME 2: Aplica o dano e mostra o resultado
-            target.Defend(damage) # Aplica o dano
+            target.Defend(damage)
+            # (is_final_screen = False por padrão)
             draw_battle_scene(heroes, enemies, f"{hero.name} causou {damage} de dano em {target.name}!")
-            time.sleep(1.5) # Pausa para ler o resultado
+            time.sleep(1.5) 
 
-            # 4. FRAME 3: Verifica se o alvo foi derrotado
             if not target.is_alive():
                 if target in living_enemies:
                     living_enemies.remove(target)
                 
+                # (is_final_screen = False por padrão)
                 draw_battle_scene(heroes, enemies, f"!!! {target.name} foi derrotado !!!")
                 time.sleep(2)
     
@@ -211,6 +221,7 @@ while any(hero.is_alive() for hero in heroes) and any(enemy.is_alive() for enemy
     living_enemies = [e for e in enemies if e.is_alive()]
 
     if living_enemies and living_heroes:
+        # (is_final_screen = False por padrão)
         draw_battle_scene(heroes, enemies, f"--- Turno {turn}: Vez dos Inimigos ---")
         time.sleep(2)
 
@@ -220,17 +231,19 @@ while any(hero.is_alive() for hero in heroes) and any(enemy.is_alive() for enemy
             target = random.choice(living_heroes)
             damage = enemy.Atack()
 
-            # "Animação" de Mensagem para o inimigo
+            # (is_final_screen = False por padrão)
             draw_battle_scene(heroes, enemies, f"{enemy.name} ataca {target.name}...")
             time.sleep(1.2)
             
             target.Defend(damage)
+            # (is_final_screen = False por padrão)
             draw_battle_scene(heroes, enemies, f"{enemy.name} causou {damage} de dano em {target.name}!")
             time.sleep(1.5)
 
             if not target.is_alive():
                 if target in living_heroes:
                     living_heroes.remove(target)
+                # (is_final_screen = False por padrão)
                 draw_battle_scene(heroes, enemies, f"!!! {target.name} foi derrotado !!!")
                 time.sleep(2)
     
@@ -238,23 +251,26 @@ while any(hero.is_alive() for hero in heroes) and any(enemy.is_alive() for enemy
 
 # --- Fim do Combate ---
 clear_screen()
-print("\n" * 5) # Centra a mensagem final
+print("\n" * 5) 
 
 heroes_alive = [hero for hero in heroes if hero.is_alive()]
 
-# Mensagens de vitória/derrota corrigidas (apenas espaços normais)
 if heroes_alive:
-    print("*************************************".center(92))
-    print("* VITÓRIA DOS HERÓIS!          *".center(92))
-    print("*************************************".center(92))
+    # Imprime a mensagem de vitória em VERDE
+    print(f"{COLOR['GREEN']}{'*************************************'.center(92)}{COLOR['RESET']}")
+    print(f"{COLOR['GREEN']}{'* VITÓRIA DOS HERÓIS!          *'.center(92)}{COLOR['RESET']}")
+    print(f"{COLOR['GREEN']}{'*************************************'.center(92)}{COLOR['RESET']}")
 else:
-    print("*************************************".center(92))
-    print("* OS INIMIGOS VENCERAM!        *".center(92))
-    print("*************************************".center(92))
+    # Imprime a mensagem de derrota em VERMELHO
+    print(f"{COLOR['RED']}{'*************************************'.center(92)}{COLOR['RESET']}")
+    print(f"{COLOR['RED']}{'* OS INIMIGOS VENCERAM!        *'.center(92)}{COLOR['RESET']}")
+    print(f"{COLOR['RED']}{'*************************************'.center(92)}{COLOR['RESET']}")
 
 print("\n\n--- STATUS FINAL ---\n")
-# Mostra a UI final lado a lado
-draw_battle_scene(heroes, enemies, "FIM DE JOGO")
 
-print("\n") # Espaço extra
+# --- MUDANÇA 5: Chamada final ---
+# Aqui, nós explicitamente dizemos para a função que é a tela final
+draw_battle_scene(heroes, enemies, "FIM DE JOGO", is_final_screen=True)
+
+print("\n") 
 input("Pressione ENTER para sair.")
